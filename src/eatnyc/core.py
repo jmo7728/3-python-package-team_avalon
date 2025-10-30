@@ -1,7 +1,6 @@
 import csv
 import random
 import os
-import argparse
 from importlib.resources import files 
 
 _DATA_PKG = "eatnyc.data"
@@ -43,28 +42,18 @@ def load_data(path: str | None = None, validate: bool = True) -> list[dict]:
     #Adds helper lists: `_cuisines`, `_vibes`.
     
     if path is None:
-        # use the packaged resource
-        csv_path = files(_DATA_PKG) / _DEFAULT_CSV
-        f = csv_path.open("r", encoding="utf-8")
-        close_after = True
-    else:
-        f = open(path, "r", encoding="utf-8")
-        close_after = True
+        path = str(files(_DATA_PKG).joinpath(_DEFAULT_CSV))
 
-    try:
+    with open(path, "r", encoding="utf-8", newline="") as f:
         reader = csv.DictReader(f)
-        # validate required headers
+
         if validate:
-            cols = {c.strip().lower() for c in reader.fieldnames or []}
+            cols = {c.strip().lower() for c in (reader.fieldnames or [])}
             missing = _REQUIRED_COLS - cols
             if missing:
                 raise ValueError(f"CSV missing required columns: {sorted(missing)}")
 
-        data = [_normalize_row(r) for r in reader]
-        return data
-    finally:
-        if close_after:
-            f.close()
+        return [_normalize_row(r) for r in reader]
 
 
 
@@ -126,6 +115,7 @@ def format_card(row, style="ascii", width=48, show_vibes=True):
 
 
 def cli(argv=None):
+    import argparse
     # Simple command-line entrypoint:
     #   $ eatnyc            -> prints top 5 by rating
     #   $ eatnyc -n 10      -> prints top 10
