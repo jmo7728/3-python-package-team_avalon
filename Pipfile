@@ -5,6 +5,7 @@ name = "pypi"
 
 [packages]
 pytest = "*"
+eatnyc = {file = ".", editable = true}
 
 [dev-packages]
 

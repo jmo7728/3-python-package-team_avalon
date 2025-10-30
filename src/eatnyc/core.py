@@ -39,13 +39,16 @@ def load_data(path: str | None = None, validate: bool = True) -> list[dict]:
 
     #If `path` is None, loads the bundled file from eatnyc/data/.
     #Keys are lowercased; rating is converted to float.
-    #Adds helper lists: `_cuisines`, `_vibes`.
-    
+    #Adds helper lists: `_cuisines`.
     if path is None:
-        path = str(files(_DATA_PKG).joinpath(_DEFAULT_CSV))
+        #use importlib.resources so this works from wheels/zip installs
+        resource = files(_DATA_PKG) / _DEFAULT_CSV
+        f = resource.open("r", encoding="utf-8", newline="")
+    else:
+        f = open(path, "r", encoding="utf-8", newline="")
 
-    with open(path, "r", encoding="utf-8", newline="") as f:
-        reader = csv.DictReader(f)
+    with f as fh:
+        reader = csv.DictReader(fh)
 
         if validate:
             cols = {c.strip().lower() for c in (reader.fieldnames or [])}
@@ -54,7 +57,6 @@ def load_data(path: str | None = None, validate: bool = True) -> list[dict]:
                 raise ValueError(f"CSV missing required columns: {sorted(missing)}")
 
         return [_normalize_row(r) for r in reader]
-
 
 
 def filter_restaurants(data, cuisine=None, neighborhood=None, price=None, min_rating=None, vibe=None, limit=None):
