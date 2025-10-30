@@ -3,8 +3,8 @@ import random
 import os
 from importlib.resources import files 
 
-_DATA_PKG = "eatnyc.data"
-_DEFAULT_CSV = "nyc_restaurant_data.csv"
+_DATA_PKG = "eatnyc"
+_DEFAULT_CSV = "data/nyc_restaurant_data.csv"
 
 #columns we expect in the CSV 
 _REQUIRED_COLS = {"name", "cuisine","neighborhood", "price", "rating", "sample_dish"}
@@ -12,7 +12,7 @@ _REQUIRED_COLS = {"name", "cuisine","neighborhood", "price", "rating", "sample_d
 
 #new function (NORMALIZE_ROWS)
 def _normalize_row(row: dict) -> dict:
-    """Clean up one CSV row: strip spaces, normalize case/types, compute helper fields."""
+    #Clean up one CSV row: strip spaces, normalize case/types, compute helper fields.
     clean = {k.strip().lower(): (v.strip() if isinstance(v, str) else v) for k, v in row.items()}
 
     # rating → float (default 0.0)
