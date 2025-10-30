@@ -42,28 +42,18 @@ def load_data(path: str | None = None, validate: bool = True) -> list[dict]:
     #Adds helper lists: `_cuisines`, `_vibes`.
     
     if path is None:
-        # use the packaged resource
-        csv_path = files(_DATA_PKG) / _DEFAULT_CSV
-        f = csv_path.open("r", encoding="utf-8")
-        close_after = True
-    else:
-        f = open(path, "r", encoding="utf-8")
-        close_after = True
+        path = str(files(_DATA_PKG).joinpath(_DEFAULT_CSV))
 
-    try:
+    with open(path, "r", encoding="utf-8", newline="") as f:
         reader = csv.DictReader(f)
-        # validate required headers
+
         if validate:
-            cols = {c.strip().lower() for c in reader.fieldnames or []}
+            cols = {c.strip().lower() for c in (reader.fieldnames or [])}
             missing = _REQUIRED_COLS - cols
             if missing:
                 raise ValueError(f"CSV missing required columns: {sorted(missing)}")
 
-        data = [_normalize_row(r) for r in reader]
-        return data
-    finally:
-        if close_after:
-            f.close()
+        return [_normalize_row(r) for r in reader]
 
 
 
@@ -122,3 +112,22 @@ def sample_dish(cuisine=None, seed=None):
 
 def format_card(row, style="ascii", width=48, show_vibes=True):
     return
+
+
+def cli(argv=None):
+    import argparse
+    # Simple command-line entrypoint:
+    #   $ eatnyc            -> prints top 5 by rating
+    #   $ eatnyc -n 10      -> prints top 10
+    #   $ eatnyc --sort name --asc -> sort by name ascending
+    
+    parser = argparse.ArgumentParser(prog="eatnyc", description="NYC restaurant recommender")
+    parser.add_argument("-n", "--n", type=int, default=5, help="number of results")
+    parser.add_argument("--sort", default="rating", help="field to sort by (rating, name, price, etc.)")
+    parser.add_argument("--asc", action="store_true", help="sort ascending (default is descending)")
+    args = parser.parse_args(argv)
+
+    data = load_data()
+    results = top_n(data, n=args.n, sort_by=args.sort, descending=not args.asc)
+    for r in results:
+        print(f"{r['name']} | {r['cuisine']} | {r['price']} | ★{r['rating']} | {r.get('sample_dish','')}")
