@@ -72,7 +72,48 @@ def filter_restaurants(data, cuisine=None, neighborhood=None, price=None, min_ra
 
 
 def top_n(data, n=5, sort_by="rating", descending=True):
-    return
+    if not isinstance(data, list):
+        raise TypeError("data must be a list of dicts")
+
+    if not data:
+        return []
+
+    # normalize sort key to lower-case to match load_data normalization
+    sort_key = (sort_by or "").strip().lower()
+    if not sort_key:
+        raise ValueError("sort_by must be a non-empty string")
+
+    # validate the key exists in at least one row; otherwise error for clarity
+    if all((sort_key not in row) for row in data if isinstance(row, dict)):
+        raise KeyError(f"sort_by key not found in data rows: '{sort_key}'")
+
+    def key_func(row):
+        # Missing keys sort as None -> treated as smallest when descending=False, largest when descending=True
+        value = row.get(sort_key)
+        # Ensure consistent comparison for mixed types
+        if isinstance(value, (int, float)):
+            return value
+        return ("" if value is None else str(value).lower())
+
+    try:
+        sorted_rows = sorted(
+            (r for r in data if isinstance(r, dict)),
+            key=key_func,
+            reverse=bool(descending),
+        )
+    except TypeError:
+        # Fallback: convert all keys to string for sorting if mixed incomparable types
+        sorted_rows = sorted(
+            (r for r in data if isinstance(r, dict)),
+            key=lambda r: str(r.get(sort_key, "")),
+            reverse=bool(descending),
+        )
+
+    if n is None:
+        return sorted_rows
+    if not isinstance(n, int) or n < 0:
+        raise ValueError("n must be a non-negative integer or None")
+    return sorted_rows[:n]
 
 
 def sample_dish(cuisine=None, seed=None):
