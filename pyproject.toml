@@ -8,15 +8,16 @@ version = "0.1.0"
 description = "A tiny NYC restaurant recommender near NYU."
 readme = "README.md"
 requires-python = ">=3.10"
-license = {text = "MIT"}
-authors = [{
-    name = Team Avalon
-}]
-keywords = ["nyc", "restaurants", "fun", "food", recommendations]
+license = { text = "MIT" }
+authors = [{ name = "Team Avalon" }]
+keywords = ["nyc", "restaurants", "fun", "food", "recommendations"]
 
 [tool.setuptools]
-package_dir = {"" = "src"}
+package-dir = {"" = "src"}
 
 [tool.setuptools.packages.find]
 where = ["src"]
+
+[tool.setuptools.package-data]
+eatnyc = ["data/*.csv"]
 
