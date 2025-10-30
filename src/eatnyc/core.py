@@ -1,6 +1,7 @@
 import csv
 import random
 import os
+import argparse
 from importlib.resources import files 
 
 _DATA_PKG = "eatnyc.data"
@@ -122,3 +123,21 @@ def sample_dish(cuisine=None, seed=None):
 
 def format_card(row, style="ascii", width=48, show_vibes=True):
     return
+
+
+def cli(argv=None):
+    # Simple command-line entrypoint:
+    #   $ eatnyc            -> prints top 5 by rating
+    #   $ eatnyc -n 10      -> prints top 10
+    #   $ eatnyc --sort name --asc -> sort by name ascending
+    
+    parser = argparse.ArgumentParser(prog="eatnyc", description="NYC restaurant recommender")
+    parser.add_argument("-n", "--n", type=int, default=5, help="number of results")
+    parser.add_argument("--sort", default="rating", help="field to sort by (rating, name, price, etc.)")
+    parser.add_argument("--asc", action="store_true", help="sort ascending (default is descending)")
+    args = parser.parse_args(argv)
+
+    data = load_data()
+    results = top_n(data, n=args.n, sort_by=args.sort, descending=not args.asc)
+    for r in results:
+        print(f"{r['name']} | {r['cuisine']} | {r['price']} | ★{r['rating']} | {r.get('sample_dish','')}")
