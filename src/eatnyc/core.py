@@ -3,8 +3,8 @@ import random
 import os
 from importlib.resources import files 
 
-_DATA_PKG = "eatnyc.data"
-_DEFAULT_CSV = "nyc_restaurant_data.csv"
+_DATA_PKG = "eatnyc"
+_DEFAULT_CSV = "data/nyc_restaurant_data.csv"
 
 #columns we expect in the CSV 
 _REQUIRED_COLS = {"name", "cuisine","neighborhood", "price", "rating", "sample_dish"}
@@ -12,7 +12,7 @@ _REQUIRED_COLS = {"name", "cuisine","neighborhood", "price", "rating", "sample_d
 
 #new function (NORMALIZE_ROWS)
 def _normalize_row(row: dict) -> dict:
-    """Clean up one CSV row: strip spaces, normalize case/types, compute helper fields."""
+    #Clean up one CSV row: strip spaces, normalize case/types, compute helper fields.
     clean = {k.strip().lower(): (v.strip() if isinstance(v, str) else v) for k, v in row.items()}
 
     # rating → float (default 0.0)
@@ -39,13 +39,16 @@ def load_data(path: str | None = None, validate: bool = True) -> list[dict]:
 
     #If `path` is None, loads the bundled file from eatnyc/data/.
     #Keys are lowercased; rating is converted to float.
-    #Adds helper lists: `_cuisines`, `_vibes`.
-    
+    #Adds helper lists: `_cuisines`.
     if path is None:
-        path = str(files(_DATA_PKG).joinpath(_DEFAULT_CSV))
+        #use importlib.resources so this works from wheels/zip installs
+        resource = files(_DATA_PKG) / _DEFAULT_CSV
+        f = resource.open("r", encoding="utf-8", newline="")
+    else:
+        f = open(path, "r", encoding="utf-8", newline="")
 
-    with open(path, "r", encoding="utf-8", newline="") as f:
-        reader = csv.DictReader(f)
+    with f as fh:
+        reader = csv.DictReader(fh)
 
         if validate:
             cols = {c.strip().lower() for c in (reader.fieldnames or [])}
@@ -54,7 +57,6 @@ def load_data(path: str | None = None, validate: bool = True) -> list[dict]:
                 raise ValueError(f"CSV missing required columns: {sorted(missing)}")
 
         return [_normalize_row(r) for r in reader]
-
 
 
 def filter_restaurants(data, cuisine=None, neighborhood=None, price=None, min_rating=None, vibe=None, limit=None):

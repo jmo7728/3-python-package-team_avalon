@@ -1,7 +1,7 @@
 {
     "_meta": {
         "hash": {
-            "sha256": "20e1aad87698ead018f54bacfa6e7e1d5f1f0cae78c447d1465c006cbc99a583"
+            "sha256": "50cc5e5b50ec9c8d518d42690687ceab893c30545fc40b48cc00dac6de3f44d7"
         },
         "pipfile-spec": 6,
         "requires": {
@@ -16,6 +16,10 @@
         ]
     },
     "default": {
+        "eatnyc": {
+            "editable": true,
+            "file": "."
+        },
         "iniconfig": {
             "hashes": [
                 "sha256:c76315c77db068650d49c5b56314774a7804df16fee4402c1f19d6d15d8c4730",
