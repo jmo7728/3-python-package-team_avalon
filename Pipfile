@@ -9,6 +9,9 @@ eatnyc = {file = ".", editable = true}
 build = "*"
 
 [dev-packages]
+build = "*"
+twine = "*"
+pytest = "*"
 
 [requires]
 python_version = "3.10"
