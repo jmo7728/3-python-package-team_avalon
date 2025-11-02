@@ -60,7 +60,40 @@ def load_data(path: str | None = None, validate: bool = True) -> list[dict]:
 
 
 def filter_restaurants(data, cuisine=None, neighborhood=None, price=None, min_rating=None, vibe=None, limit=None):
-    return
+    if not isinstance(data, list):
+        raise TypeError("Data must be a list of dicts")
+    
+    if not data:
+        return []
+    
+    results = []
+    for row in data:
+        if cuisine:
+            if cuisine.strip().lower() not in row.get("cuisines", []):
+                continue
+
+        if neighborhood:
+            if neighborhood.strip().lower() != row.get("neighborhood", "").lower():
+                continue
+
+        if price:
+            if price.strip() != row.get("price", ""):
+                continue
+
+        if min_rating:
+            try:
+                min_rating_val = float(min_rating)
+            except ValueError:
+                raise ValueError("min_rating must be a number")
+            if row.get("rating", 0.0) < min_rating_val:
+                continue
+
+        results.append(row)
+
+        if limit:
+            if len(results) >= limit:
+                break
+    return results
 
 
 def top_n(data, n=5, sort_by="rating", descending=True):
