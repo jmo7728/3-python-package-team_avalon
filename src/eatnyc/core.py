@@ -112,8 +112,63 @@ def sample_dish(cuisine=None, seed=None):
     return
 
 
-def format_card(row, style="ascii", width=48, show_vibes=True):
-    return
+def format_card(row, style="ascii", width=60, show_dish=True):
+    name = str(row.get("name", "") or "").strip()
+    cuisine = str(row.get("cuisine", "") or "").strip()
+    neighborhood = str(row.get("neighborhood", "") or "").strip()
+    price = str(row.get("price", "") or "").strip()
+
+    try:
+        rating = float(row.get("rating", 0.0))
+    except (TypeError, ValueError):
+        rating = 0.0
+    
+    sample = str(row.get("sample_dish", "") or "").strip()
+
+    title_line = name if name else "(unknown)"
+    sub_line = f"{cuisine}, {neighborhood}".strip(", ").strip()
+    meta_line = f"Rating: {rating:.1f}   Price: {price}".strip()
+    dish_line = f"Dish: {sample}" if (show_dish and sample) else ""
+
+    if style.lower() == "markdown":
+        body = f"**{title_line}** — *{sub_line}*\n{meta_line}"
+        if dish_line:
+            body += f"\n{dish_line}"
+        return body
+
+    def _wrap_line(line: str, inner_width: int):
+        if not line:
+            return [""]
+        words = line.split()
+        out, cur = [], ""
+        for w in words:
+            if not cur:
+                cur = w
+            elif len(cur) + 1 + len(w) <= inner_width:
+                cur += " " + w
+            else:
+                out.append(cur)
+                cur = w
+        if cur:
+            out.append(cur)
+        return out
+
+    box_width = max(24, int(width) if isinstance(width, int) else 48)
+    inner = box_width - 2
+
+    logical_lines = [f"{title_line}  ({sub_line})" if sub_line else title_line,
+                    meta_line,
+                    dish_line]
+    
+    wrapped = []
+    for ln in logical_lines:
+        wrapped.extend(_wrap_line(ln, inner) if ln else [""])
+
+    top = "+" + "-" * (box_width - 2) + "+"
+    content = "\n".join("|" + (ln.ljust(inner)) + "|" for ln in wrapped if ln is not None)
+    bottom = top
+
+    return f"{top}\n{content}\n{bottom}"
 
 
 def cli(argv=None):
