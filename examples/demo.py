@@ -1,4 +1,4 @@
-from eatnyc import load_data, top_n, filter_restaurants # add others as they land
+from eatnyc import load_data, top_n, filter_restaurants, format_card # add others as they land
 
 def main():
     data = load_data()
