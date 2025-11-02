@@ -59,7 +59,9 @@ def load_data(path: str | None = None, validate: bool = True) -> list[dict]:
         return [_normalize_row(r) for r in reader]
 
 
-def filter_restaurants(data, cuisine=None, neighborhood=None, price=None, min_rating=None, vibe=None, limit=None):
+def filter_restaurants(data, cuisine=None, neighborhood=None, price=None, min_rating=None, limit=None):
+
+    #Error checking for empty or invalid data
     if not isinstance(data, list):
         raise TypeError("Data must be a list of dicts")
     
@@ -67,25 +69,26 @@ def filter_restaurants(data, cuisine=None, neighborhood=None, price=None, min_ra
         return []
     
     results = []
+
+    # Filtering logic
     for row in data:
+        clean = _normalize_row(row)
         if cuisine:
-            if cuisine.strip().lower() not in row.get("cuisines", []):
+            if cuisine.strip().lower() not in clean.get("_cuisines", []):
                 continue
 
         if neighborhood:
             if neighborhood.strip().lower() != row.get("neighborhood", "").lower():
                 continue
-
         if price:
-            if price.strip() != row.get("price", ""):
+            if price.strip() != clean.get("price", ""):
                 continue
-
         if min_rating:
             try:
                 min_rating_val = float(min_rating)
             except ValueError:
                 raise ValueError("min_rating must be a number")
-            if row.get("rating", 0.0) < min_rating_val:
+            if clean.get("rating", 0.0) < min_rating_val:
                 continue
 
         results.append(row)
