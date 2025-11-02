@@ -9,6 +9,7 @@ on:
 
 jobs:
   build:
+    name: Build & Test
     runs-on: ubuntu-latest
     timeout-minutes: 5
     strategy:
@@ -23,13 +24,14 @@ jobs:
           python-version: ${{ matrix.python-version }}
 
           #installing requirements.txt
-      - name: Install requirements.txt
+      - name: Install requirements.txt + test deps
         run: |
           if [ -f requirements.txt ]; then pipenv run pip install -r requirements.txt; fi
 
       - name: Turn on 'editable' mode
         run: |
           pipenv install -e .
+          pipenv install pytest build
 
       - name: Test with pytest
         run: |
@@ -37,8 +39,14 @@ jobs:
           pipenv --venv
           pipenv run python -m pytest
 
+      - name: Build package
+        run: |
+          rm -rf dist build src/*.egg-info
+          pipenv run python -m build .
+
+
   deliver:
-    if: github.event_name != 'pull_request'
+    if: github.event_name != 'pull_request' && startsWith(github.ref, 'refs/tags/v')
     needs: [build]
     runs-on: ubuntu-latest
     timeout-minutes: 5
@@ -53,12 +61,12 @@ jobs:
           pipenv install build
           pipenv run python -m build .
 
-        #change the following to the published one (not PyPI TEST)
-      # - name: Publish to PyPI test server
-      #   uses: pypa/gh-action-pypi-publish@release/v1
-      #   with:
-      #     password: ${{ secrets.TEST_PYPI_API_TOKEN }}
-      #     repository-url: https://test.pypi.org/legacy/
+      - name: Publish to PyPI test server
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          repository-url: https://test.pypi.org/legacy/
+          password: ${{ secrets.TEST_PYPI_API_TOKEN }}
+
 
   #ADDED to verify upload
   # verify-upload:
