@@ -1,18 +1,17 @@
 import csv
 import random
-import os
-from importlib.resources import files 
+from importlib.resources import files
 
 _DATA_PKG = "eatnyc"
 _DEFAULT_CSV = "data/nyc_restaurant_data.csv"
 
-#columns we expect in the CSV 
-_REQUIRED_COLS = {"name", "cuisine","neighborhood", "price", "rating", "sample_dish"}
+# columns we expect in the CSV
+_REQUIRED_COLS = {"name", "cuisine", "neighborhood", "price", "rating", "sample_dish"}
 
 
-#new function (NORMALIZE_ROWS)
+# new function (NORMALIZE_ROWS)
 def _normalize_row(row: dict) -> dict:
-    #Clean up one CSV row: strip spaces, normalize case/types, compute helper fields.
+    # Clean up one CSV row: strip spaces, normalize case/types, compute helper fields.
     clean = {k.strip().lower(): (v.strip() if isinstance(v, str) else v) for k, v in row.items()}
 
     # rating → float (default 0.0)
@@ -34,14 +33,15 @@ def _normalize_row(row: dict) -> dict:
 
     return clean
 
-#Load the NYC restaurant CSV into a list of dicts.
+
+# Load the NYC restaurant CSV into a list of dicts.
 def load_data(path: str | None = None, validate: bool = True) -> list[dict]:
 
-    #If `path` is None, loads the bundled file from eatnyc/data/.
-    #Keys are lowercased; rating is converted to float.
-    #Adds helper lists: `_cuisines`.
+    # If `path` is None, loads the bundled file from eatnyc/data/.
+    # Keys are lowercased; rating is converted to float.
+    # Adds helper lists: `_cuisines`.
     if path is None:
-        #use importlib.resources so this works from wheels/zip installs
+        # use importlib.resources so this works from wheels/zip installs
         resource = files(_DATA_PKG) / _DEFAULT_CSV
         f = resource.open("r", encoding="utf-8", newline="")
     else:
@@ -61,13 +61,13 @@ def load_data(path: str | None = None, validate: bool = True) -> list[dict]:
 
 def filter_restaurants(data, cuisine=None, neighborhood=None, price=None, min_rating=None, limit=None):
 
-    #Error checking for empty or invalid data
+    # Error checking for empty or invalid data
     if not isinstance(data, list):
         raise TypeError("Data must be a list of dicts")
-    
+
     if not data:
         return []
-    
+
     results = []
 
     # Filtering logic
@@ -145,7 +145,54 @@ def top_n(data, n=5, sort_by="rating", descending=True):
 
 
 def sample_dish(cuisine=None, seed=None):
-    return
+    '''
+    Return a random restaurant with its sample dish recommendation.
+    '''
+    if seed is not None:
+        random.seed(seed)
+
+    # Load the restaurant data
+    data = load_data()
+
+    # Filter by cuisine if provided
+    if cuisine:
+        cuisine_lower = cuisine.strip().lower()
+        filtered = [
+            row for row in data
+            if cuisine_lower in row.get("_cuisines", [])
+        ]
+
+        # Filter out entries without a sample_dish
+        with_dishes = [
+            row for row in filtered
+            if row.get("sample_dish", "").strip()
+        ]
+
+        if not with_dishes:
+            # Get all available cuisines
+            all_cuisines = set()
+            for row in data:
+                all_cuisines.update(row.get("_cuisines", []))
+
+            # Suggest some alternatives (random 3-5 cuisines)
+            suggestions = random.sample(sorted(all_cuisines), min(5, len(all_cuisines)))
+
+            return {
+                "error": f"No restaurants found for cuisine '{cuisine}'",
+                "suggestions": suggestions,
+                "message": "Maybe try these instead?"
+            }
+    else:
+        # No cuisine specified, use all restaurants
+        with_dishes = [
+            row for row in data
+            if row.get("sample_dish", "").strip()
+        ]
+
+        if not with_dishes:
+            return None
+
+    return random.choice(with_dishes)
 
 
 def format_card(row, style="ascii", width=60, show_dish=True):
@@ -158,7 +205,7 @@ def format_card(row, style="ascii", width=60, show_dish=True):
         rating = float(row.get("rating", 0.0))
     except (TypeError, ValueError):
         rating = 0.0
-    
+
     sample = str(row.get("sample_dish", "") or "").strip()
 
     title_line = name if name else "(unknown)"
@@ -192,10 +239,8 @@ def format_card(row, style="ascii", width=60, show_dish=True):
     box_width = max(24, int(width) if isinstance(width, int) else 48)
     inner = box_width - 2
 
-    logical_lines = [f"{title_line}  ({sub_line})" if sub_line else title_line,
-                    meta_line,
-                    dish_line]
-    
+    logical_lines = [f"{title_line}  ({sub_line})" if sub_line else title_line, meta_line, dish_line]
+
     wrapped = []
     for ln in logical_lines:
         wrapped.extend(_wrap_line(ln, inner) if ln else [""])
@@ -213,7 +258,7 @@ def cli(argv=None):
     #   $ eatnyc            -> prints top 5 by rating
     #   $ eatnyc -n 10      -> prints top 10
     #   $ eatnyc --sort name --asc -> sort by name ascending
-    
+
     parser = argparse.ArgumentParser(prog="eatnyc", description="NYC restaurant recommender")
     parser.add_argument("-n", "--n", type=int, default=5, help="number of results")
     parser.add_argument("--sort", default="rating", help="field to sort by (rating, name, price, etc.)")
@@ -223,4 +268,4 @@ def cli(argv=None):
     data = load_data()
     results = top_n(data, n=args.n, sort_by=args.sort, descending=not args.asc)
     for r in results:
-        print(f"{r['name']} | {r['cuisine']} | {r['price']} | ★{r['rating']} | {r.get('sample_dish','')}")
+        print(f"{r['name']} | {r['cuisine']} | {r['price']} | ★{r['rating']} | {r.get('sample_dish', '')}")
