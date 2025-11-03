@@ -1,6 +1,8 @@
 import pytest
 from eatnyc import filter_restaurants
 
+
+#Standard Sample Data
 def _sample_data():
     return [
         {"name": "B", "cuisine": "X", "neighborhood": "N1", "price": "$$", "rating": 4.2, "sample_dish": "d1"},
