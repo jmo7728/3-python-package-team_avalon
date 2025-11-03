@@ -145,7 +145,54 @@ def top_n(data, n=5, sort_by="rating", descending=True):
 
 
 def sample_dish(cuisine=None, seed=None):
-    return
+    '''
+    Return a random restaurant with its sample dish recommendation.
+    '''
+    if seed is not None:
+        random.seed(seed)
+
+    # Load the restaurant data
+    data = load_data()
+
+    # Filter by cuisine if provided
+    if cuisine:
+        cuisine_lower = cuisine.strip().lower()
+        filtered = [
+            row for row in data
+            if cuisine_lower in row.get("_cuisines", [])
+        ]
+
+        # Filter out entries without a sample_dish
+        with_dishes = [
+            row for row in filtered
+            if row.get("sample_dish", "").strip()
+        ]
+
+        if not with_dishes:
+            # Get all available cuisines
+            all_cuisines = set()
+            for row in data:
+                all_cuisines.update(row.get("_cuisines", []))
+
+            # Suggest some alternatives (random 3-5 cuisines)
+            suggestions = random.sample(sorted(all_cuisines), min(5, len(all_cuisines)))
+
+            return {
+                "error": f"No restaurants found for cuisine '{cuisine}'",
+                "suggestions": suggestions,
+                "message": "Maybe try these instead?"
+            }
+    else:
+        # No cuisine specified, use all restaurants
+        with_dishes = [
+            row for row in data
+            if row.get("sample_dish", "").strip()
+        ]
+
+        if not with_dishes:
+            return None
+
+    return random.choice(with_dishes)
 
 
 def format_card(row, style="ascii", width=60, show_dish=True):
