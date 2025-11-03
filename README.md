@@ -44,11 +44,11 @@ from eatnyc import load_data, filter_restaurants, top_n, sample_dish, format_car
 
 data = load_data()
 
-# Filter restaurants by cuisine and borough
+# Filter restaurants by cuisine and neighborhood
 italian_manhattan = filter_restaurants(
     data,
     cuisine="Italian",
-    borough="Manhattan",
+    neighborhood="Manhattan",
     min_rating=4.0
 )
 
